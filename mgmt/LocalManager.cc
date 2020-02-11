@@ -971,8 +971,18 @@ LocalManager::bindProxyPort(HttpProxyPort &port)
   ElevateAccess access(priv);
 
   /* Setup reliable connection, for large config changes */
-  if ((port.m_fd = socket(port.m_family, SOCK_STREAM, 0)) < 0) {
-    mgmt_fatal(0, "[bindProxyPort] Unable to create socket : %s\n", strerror(errno));
+  if (port.m_mptcp) {
+#if defined(IPPROTO_MPTCP)
+    if ((port.m_fd = socket(port.m_family, SOCK_STREAM, IPPROTO_MPTCP)) < 0) {
+      mgmt_fatal(0, "[bindProxyPort] Unable to create Multipath TCP socket : %s\n", strerror(errno));
+    }
+#else
+    mgmt_fatal(0, "[bindProxyPort], Multipath TCP requested but not configured on this host");
+#endif
+  } else {
+    if ((port.m_fd = socket(port.m_family, SOCK_STREAM, 0)) < 0) {
+      mgmt_fatal(0, "[bindProxyPort] Unable to create socket : %s\n", strerror(errno));
+    }
   }
 
   if (port.m_type == HttpProxyPort::TRANSPORT_DEFAULT) {
@@ -984,23 +994,6 @@ LocalManager::bindProxyPort(HttpProxyPort &port)
       (void)setsockopt(port.m_fd, SOL_FILTER, FIL_ATTACH, "httpfilt", 9);
 #endif
     }
-  }
-
-  if (port.m_mptcp) {
-#if MPTCP_ENABLED
-    int err;
-
-    err = setsockopt(port.m_fd, IPPROTO_TCP, MPTCP_ENABLED, &one, sizeof(one));
-    if (err < 0) {
-      mgmt_log("[bindProxyPort] Unable to enable MPTCP: %s\n", strerror(errno));
-      Debug("lm_mptcp", "[bindProxyPort] Unable to enable MPTCP: %s", strerror(errno));
-    } else {
-      mgmt_log("[bindProxyPort] Successfully enabled MPTCP on %d\n", port.m_port);
-      Debug("lm_mptcp", "[bindProxyPort] Successfully enabled MPTCP on %d\n", port.m_port);
-    }
-#else
-    Debug("lm_mptcp", "[bindProxyPort] Multipath TCP requested but not configured on this host");
-#endif
   }
 
   if (port.m_family == AF_INET6) {

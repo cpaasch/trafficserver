@@ -703,7 +703,7 @@ ip-resolve
 mptcp
    Enable Multipath TCP on this proxy port.
 
-   Requires custom Linux kernel available at https://multipath-tcp.org.
+   Requires Linux kernel v5.6 and above.
 
 .. topic:: Example
 
