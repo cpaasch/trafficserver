@@ -361,15 +361,7 @@ UnixNetVConnection::set_local_addr()
 inline void
 UnixNetVConnection::set_mptcp_state()
 {
-  int mptcp_enabled      = -1;
-  int mptcp_enabled_size = sizeof(mptcp_enabled);
-
-  if (0 == safe_getsockopt(con.fd, IPPROTO_TCP, MPTCP_ENABLED, (char *)&mptcp_enabled, &mptcp_enabled_size)) {
-    Debug("socket_mptcp", "MPTCP socket state: %d", mptcp_enabled);
-    mptcp_state = mptcp_enabled > 0 ? true : false;
-  } else {
-    Debug("socket_mptcp", "MPTCP failed getsockopt(): %s", strerror(errno));
-  }
+  // Not yet supported
 }
 
 inline ink_hrtime
